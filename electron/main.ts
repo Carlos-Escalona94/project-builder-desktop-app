@@ -1,10 +1,13 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain } from 'electron';
+import { IIpcChannel } from './ipc/ipc-channel.interface';
+import { SystemInfoChannel } from './ipc/channels/system-info.channel';
 
 let mainWindow: BrowserWindow | null
 
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string
 
+const ipcChannels: IIpcChannel[] = [new SystemInfoChannel()];
 // const assetsPath =
 //   process.env.NODE_ENV === 'production'
 //     ? process.resourcesPath
@@ -16,6 +19,7 @@ function createWindow () {
     width: 1100,
     height: 700,
     backgroundColor: '#191622',
+    
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -55,3 +59,11 @@ app.on('activate', () => {
     createWindow()
   }
 })
+
+function registerIpcChannels(ipcChannels: IIpcChannel[]){
+  ipcChannels.forEach(channel => {
+    ipcMain.on(channel.getName(), (event, request) => channel.handle(event, request))
+  });
+}
+
+registerIpcChannels(ipcChannels);
